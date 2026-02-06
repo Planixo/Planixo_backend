@@ -5,7 +5,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
 import cookieParser from 'cookie-parser';
-
+import connectDB from './config/db.js';
 // Load env vars
 dotenv.config();
 
@@ -25,6 +25,7 @@ app.use(cookieParser());
 app.use(cors());
 app.use(helmet());
 app.use(compression());
+connectDB();
 
 // Logger (dev only)
 if (NODE_ENV === 'development') {
