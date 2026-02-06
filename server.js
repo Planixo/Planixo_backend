@@ -5,7 +5,11 @@ import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
 import cookieParser from 'cookie-parser';
+
 import connectDB from './config/db.js';
+import authRoutes from './routes/auth.routes.js';
+import errorHandler from './middlewares/error.middleware.js';
+
 // Load env vars
 dotenv.config();
 
@@ -13,7 +17,7 @@ dotenv.config();
 const app = express();
 
 // Environment
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 3000;
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
 // ==================
@@ -25,12 +29,16 @@ app.use(cookieParser());
 app.use(cors());
 app.use(helmet());
 app.use(compression());
-connectDB();
 
 // Logger (dev only)
 if (NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
+
+// ==================
+// Database Connection
+// ==================
+connectDB();
 
 // ==================
 // Routes
@@ -43,14 +51,12 @@ app.get('/', (req, res) => {
   });
 });
 
-// MVC Routes
-// import sampleRoutes from './routes/sample.routes.js';
-// app.use('/api/sample', sampleRoutes);
+// Auth / Signup Routes (MVC)
+app.use('/api/v1/auth', authRoutes);
 
 // ==================
-// Error Handling
+// Error Handling (ALWAYS LAST)
 // ==================
-import errorHandler from './middlewares/error.middleware.js';
 app.use(errorHandler);
 
 // ==================
