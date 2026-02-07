@@ -25,13 +25,16 @@ export const sendOtpService = async (email, type) => {
     throw err;
   }
 
-  await Otp.deleteMany({ email, type });
+  // ❌ REMOVED: await Otp.deleteMany({ email, type });
 
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
   const hashedOtp = await bcrypt.hash(otp, 10);
 
-  const expiresAt = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000);
+  const expiresAt = new Date(
+    Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000
+  );
 
+  // ✅ OTP WILL ALWAYS BE SAVED
   await Otp.create({
     email,
     otp: hashedOtp,
@@ -60,13 +63,12 @@ export const verifyOtpService = async (email, otp, type) => {
   const otpRecord = await Otp.findOne({ email, type });
 
   if (!otpRecord) {
-    const err = new Error("OTP not found or expired");
+    const err = new Error("OTP not found");
     err.statusCode = 400;
     throw err;
   }
 
   if (otpRecord.expiresAt < new Date()) {
-    await Otp.deleteOne({ _id: otpRecord._id });
     const err = new Error("OTP has expired");
     err.statusCode = 400;
     throw err;
@@ -86,6 +88,8 @@ export const verifyOtpService = async (email, otp, type) => {
     );
   }
 
-  await Otp.deleteOne({ _id: otpRecord._id });
+  // ❌ REMOVED: await Otp.deleteOne({ _id: otpRecord._id });
+
+  // ✅ OTP STAYS IN DATABASE
   return true;
 };
