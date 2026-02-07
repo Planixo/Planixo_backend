@@ -28,6 +28,10 @@ const userSchema = new mongoose.Schema(
     timezone: {
       type: String,
       default: "UTC"
+    },
+    isEmailVerified: {
+      type: Boolean,
+      default: false
     }
   },
   { timestamps: true }
