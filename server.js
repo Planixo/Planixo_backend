@@ -26,7 +26,7 @@ const allowedOrigins = [
 
 const corsOptions = {
   origin: (origin, callback) => {
-    // Allow Postman / server-to-server
+    // Allow Postman, server-to-server, cron jobs
     if (!origin) return callback(null, true);
 
     if (allowedOrigins.includes(origin)) {
@@ -40,10 +40,16 @@ const corsOptions = {
   allowedHeaders: ["Content-Type", "Authorization"],
 };
 
+// Apply CORS normally
 app.use(cors(corsOptions));
 
-// Handle preflight requests (VERY IMPORTANT on Render)
-app.options("*", cors(corsOptions));
+// ✅ SAFE preflight handling (NO wildcard route)
+app.use((req, res, next) => {
+  if (req.method === "OPTIONS") {
+    return cors(corsOptions)(req, res, next);
+  }
+  next();
+});
 
 // ==================
 // MIDDLEWARE
