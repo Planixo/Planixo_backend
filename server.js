@@ -17,26 +17,33 @@ const PORT = process.env.PORT || 3000;
 const NODE_ENV = process.env.NODE_ENV || "development";
 
 // ==================
-// CORS (THIS IS ENOUGH)
+// CORS CONFIG
 // ==================
 const allowedOrigins = [
   "http://localhost:5173",
-  "https://planixo.vercel.app",
+  "https://planixo-frontend.vercel.app",
 ];
 
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      if (!origin) return callback(null, true); // Postman
-      if (allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("CORS not allowed"));
-      }
-    },
-    credentials: true,
-  })
-);
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Allow Postman / server-to-server
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    return callback(new Error(`CORS blocked for origin: ${origin}`));
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+};
+
+app.use(cors(corsOptions));
+
+// Handle preflight requests (VERY IMPORTANT on Render)
+app.options("*", cors(corsOptions));
 
 // ==================
 // MIDDLEWARE
@@ -44,7 +51,13 @@ app.use(
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-app.use(helmet());
+
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+  })
+);
+
 app.use(compression());
 
 if (NODE_ENV === "development") {
@@ -52,7 +65,7 @@ if (NODE_ENV === "development") {
 }
 
 // ==================
-// DB
+// DATABASE
 // ==================
 connectDB();
 
@@ -74,7 +87,7 @@ app.use("/api/v1/auth", authRoutes);
 app.use(errorHandler);
 
 // ==================
-// START
+// START SERVER
 // ==================
 app.listen(PORT, () => {
   console.log(`🔥 Server running on port ${PORT}`);
