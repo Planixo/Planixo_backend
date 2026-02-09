@@ -22,7 +22,7 @@ export const createUser = async (userData) => {
   const user = await User.create({
     ...userData,
     password: hashedPassword,
-    isEmailVerified: false // 🔒 default
+    isEmailVerified: false // 🔒 correct default
   });
 
   return user;
@@ -34,9 +34,8 @@ export const createUser = async (userData) => {
  * =========================
  */
 export const loginUser = async (data) => {
-  // 🛡️ Defensive check
   if (!data || typeof data !== "object") {
-    throw new Error("Request body missing or invalid JSON");
+    throw new Error("Invalid request data");
   }
 
   const { email, password } = data;
@@ -45,19 +44,25 @@ export const loginUser = async (data) => {
     throw new Error("Email and password are required");
   }
 
-  // 🔐 Explicitly select password
+  // 🔐 Explicitly include password
   const user = await User.findOne({ email }).select("+password");
 
   if (!user) {
     throw new Error("Invalid email or password");
   }
 
-  // 🚫 BLOCK LOGIN IF EMAIL NOT VERIFIED
-  if (!user.isEmailVerified) {
-    throw new Error("Email not verified. Please verify your email first.");
+  // 🚫 BLOCK ONLY IN PRODUCTION
+  if (
+    process.env.NODE_ENV === "production" &&
+    !user.isEmailVerified
+  ) {
+    throw new Error("Email not verified. Please verify your email.");
   }
 
-  const isPasswordMatch = await bcrypt.compare(password, user.password);
+  const isPasswordMatch = await bcrypt.compare(
+    password,
+    user.password
+  );
 
   if (!isPasswordMatch) {
     throw new Error("Invalid email or password");
@@ -71,7 +76,7 @@ export const loginUser = async (data) => {
   const accessToken = generateAccessToken(payload);
   const refreshToken = generateRefreshToken(payload);
 
-  // 🧹 Remove password before returning user
+  // 🧹 remove password before sending back
   user.password = undefined;
 
   return {

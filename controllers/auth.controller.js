@@ -37,8 +37,7 @@ export const signup = async (req, res) => {
 
 // Login API
 import { loginUser } from "../services/auth.service.js";
-
-export const login = async (req, res, next) => {
+export const login = async (req, res) => {
   try {
     const { user, accessToken, refreshToken } =
       await loginUser(req.body);
@@ -47,14 +46,14 @@ export const login = async (req, res, next) => {
       .cookie("accessToken", accessToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-        maxAge: 15 * 60 * 1000 // 15 min
+        sameSite: "none",
+        maxAge: 15 * 60 * 1000,
       })
       .cookie("refreshToken", refreshToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+        sameSite: "none",
+        maxAge: 7 * 24 * 60 * 60 * 1000,
       })
       .status(200)
       .json({
@@ -64,11 +63,15 @@ export const login = async (req, res, next) => {
           id: user._id,
           name: user.name,
           email: user.email,
-          role: user.role
-        }
+          role: user.role,
+        },
       });
   } catch (error) {
-    next(error); 
+    console.error("LOGIN ERROR 👉", error.message);
+
+    res.status(400).json({
+      success: false,
+      message: error.message || "Login failed",
+    });
   }
 };
-

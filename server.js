@@ -1,67 +1,81 @@
-import express from 'express';
-import dotenv from 'dotenv';
-import morgan from 'morgan';
-import cors from 'cors';
-import helmet from 'helmet';
-import compression from 'compression';
-import cookieParser from 'cookie-parser';
+import express from "express";
+import dotenv from "dotenv";
+import morgan from "morgan";
+import cors from "cors";
+import helmet from "helmet";
+import compression from "compression";
+import cookieParser from "cookie-parser";
 
-import connectDB from './config/db.js';
-import authRoutes from './routes/auth.routes.js';
-import errorHandler from './middlewares/error.middleware.js';
+import connectDB from "./config/db.js";
+import authRoutes from "./routes/auth.routes.js";
+import errorHandler from "./middlewares/error.middleware.js";
 
-// Load env vars
 dotenv.config();
 
-// App init
 const app = express();
-
-// Environment
 const PORT = process.env.PORT || 3000;
-const NODE_ENV = process.env.NODE_ENV || 'development';
+const NODE_ENV = process.env.NODE_ENV || "development";
 
 // ==================
-// Global Middleware
+// CORS (THIS IS ENOUGH)
 // ==================
-app.use(express.json({ limit: '10mb' }));
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://planixo.vercel.app",
+];
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true); // Postman
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("CORS not allowed"));
+      }
+    },
+    credentials: true,
+  })
+);
+
+// ==================
+// MIDDLEWARE
+// ==================
+app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-app.use(cors());
 app.use(helmet());
 app.use(compression());
 
-// Logger (dev only)
-if (NODE_ENV === 'development') {
-  app.use(morgan('dev'));
+if (NODE_ENV === "development") {
+  app.use(morgan("dev"));
 }
 
 // ==================
-// Database Connection
+// DB
 // ==================
 connectDB();
 
 // ==================
-// Routes
+// ROUTES
 // ==================
-app.get('/', (req, res) => {
+app.get("/", (req, res) => {
   res.status(200).json({
-    status: 'success',
-    message: 'Server is running 🚀',
-    env: NODE_ENV
+    success: true,
+    message: "🚀 Server running",
   });
 });
 
-// Auth / Signup Routes (MVC)
-app.use('/api/v1/auth', authRoutes);
+app.use("/api/v1/auth", authRoutes);
 
 // ==================
-// Error Handling (ALWAYS LAST)
+// ERROR HANDLER
 // ==================
 app.use(errorHandler);
 
 // ==================
-// Start Server
+// START
 // ==================
 app.listen(PORT, () => {
-  console.log(`🔥 Server running in ${NODE_ENV} mode on port ${PORT}`);
+  console.log(`🔥 Server running on port ${PORT}`);
 });
