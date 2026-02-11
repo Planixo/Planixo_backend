@@ -8,6 +8,7 @@ import cookieParser from "cookie-parser";
 
 import connectDB from "./config/db.js";
 import authRoutes from "./routes/auth.routes.js";
+import userRoutes from "./routes/user.routes.js";
 import errorHandler from "./middlewares/error.middleware.js";
 
 dotenv.config();
@@ -15,6 +16,13 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 const NODE_ENV = process.env.NODE_ENV || "development";
+
+
+// ==================
+// DATABASE
+// ==================
+connectDB();
+
 
 // ==================
 // CORS CONFIG
@@ -26,8 +34,7 @@ const allowedOrigins = [
 
 const corsOptions = {
   origin: (origin, callback) => {
-    // Allow Postman, server-to-server, cron jobs
-    if (!origin) return callback(null, true);
+    if (!origin) return callback(null, true); // Allow Postman
 
     if (allowedOrigins.includes(origin)) {
       return callback(null, true);
@@ -40,16 +47,8 @@ const corsOptions = {
   allowedHeaders: ["Content-Type", "Authorization"],
 };
 
-// Apply CORS normally
 app.use(cors(corsOptions));
 
-// ✅ SAFE preflight handling (NO wildcard route)
-app.use((req, res, next) => {
-  if (req.method === "OPTIONS") {
-    return cors(corsOptions)(req, res, next);
-  }
-  next();
-});
 
 // ==================
 // MIDDLEWARE
@@ -70,27 +69,42 @@ if (NODE_ENV === "development") {
   app.use(morgan("dev"));
 }
 
-// ==================
-// DATABASE
-// ==================
-connectDB();
 
 // ==================
 // ROUTES
 // ==================
+
+// Health check
 app.get("/", (req, res) => {
   res.status(200).json({
     success: true,
-    message: "🚀 Server running",
+    message: "🚀 Planixo Server Running",
   });
 });
 
+// Auth routes
 app.use("/api/v1/auth", authRoutes);
 
+// ✅ User routes (IMPORTANT)
+userRoutes(app);
+
+
 // ==================
-// ERROR HANDLER
+// 404 HANDLER
+// ==================
+app.use((req, res, next) => {
+  res.status(404).json({
+    success: false,
+    message: `Route not found: ${req.originalUrl}`,
+  });
+});
+
+
+// ==================
+// GLOBAL ERROR HANDLER
 // ==================
 app.use(errorHandler);
+
 
 // ==================
 // START SERVER
