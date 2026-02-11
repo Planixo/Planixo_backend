@@ -30,6 +30,7 @@ connectDB();
 const allowedOrigins = [
   "http://localhost:5173",
   "https://planixo-frontend.vercel.app",
+  "https://planixo-frontend-hgunlqw0a-planixos-projects.vercel.app"
 ];
 
 const corsOptions = {
