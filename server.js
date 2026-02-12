@@ -10,6 +10,8 @@ import connectDB from "./config/db.js";
 import authRoutes from "./routes/auth.routes.js";
 import userRoutes from "./routes/user.routes.js";
 import errorHandler from "./middlewares/error.middleware.js";
+import teamRoutes from "./routes/team.routes.js";
+
 
 dotenv.config();
 
@@ -88,6 +90,7 @@ app.use("/api/v1/auth", authRoutes);
 
 // ✅ User routes (IMPORTANT)
 userRoutes(app);
+teamRoutes(app);
 
 
 // ==================
